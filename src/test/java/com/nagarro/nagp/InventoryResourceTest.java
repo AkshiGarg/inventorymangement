@@ -3,40 +3,53 @@ package com.nagarro.nagp;
 import com.nagarro.nagp.domain.Category;
 import com.nagarro.nagp.exception.InvalidRequestException;
 import com.nagarro.nagp.handler.InventoryHandler;
-import org.hamcrest.core.Is;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.junit.runners.Parameterized;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class InventoryResourceTest {
 
-    @InjectMocks
     private InventoryResource inventoryResource;
 
-    @Mock
-    private InventoryHandler inventoryHandler;
+    private InventoryHandler inventoryHandler = mock(InventoryHandler.class);
+
+    @Parameterized.Parameter()
+    public Inventory inventory;
+
+    @Parameterized.Parameter(1)
+    public Inventory result;
+
+    public static Object[][] input() {
+        return new Object[][]
+                {
+                        {new Inventory(Category.DURABLE), new Inventory(Category.DURABLE)},
+                        {new Inventory(Category.FRAGILE), new Inventory(Category.FRAGILE)}
+                };
+    }
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Test
-    public void shouldReturnCreatedInventorySuccessfullyWhenInventoryIsNotNull() {
-        final Inventory inventory = new Inventory(Category.DURABLE);
-        when(inventoryHandler.createInventory(inventory))
-                .thenReturn(inventory);
+    @Before
+    public void setUp() {
+        inventoryResource = new InventoryResource(inventoryHandler);
+    }
 
-        final Inventory result = inventoryResource.createInventory(inventory);
+    @Test
+    @Parameters(method = "input")
+    public void shouldReturnCreatedInventorySuccessfullyWhenInventoryIsNotNull(Inventory inventory, Inventory result) {
+
+        inventoryResource.createInventory(inventory);
 
         verify(inventoryHandler, times(1)).createInventory(inventory);
-        assertThat(result.getCategory(), Is.is(inventory.getCategory()));
     }
 
     @Test
